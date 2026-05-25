@@ -1,6 +1,6 @@
-import { Header } from "./components/Header.tsx";
-import { FormList } from "./features/graph/components/FormList.tsx";
-import { PrefillPanel } from "./features/prefill/components/PrefillPanel.tsx";
+import { Header } from "@/components/Header.tsx";
+import { FormList } from "@/features/graph/components/FormList.tsx";
+import { PrefillPanel } from "@/features/prefill/components/PrefillPanel.tsx";
 
 function App() {
   return (

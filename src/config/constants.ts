@@ -1,4 +1,4 @@
-import { requireEnv } from "../utils/requireEnv";
+import { requireEnv } from "@/utils/requireEnv.ts";
 
 export const TENANT_ID = requireEnv(
   "VITE_TENANT_ID",
