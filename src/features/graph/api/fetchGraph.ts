@@ -1,11 +1,8 @@
 import { GRAPH_PATH } from "@/config/constants.ts";
 import type { BlueprintGraph } from "@/types/graph.ts";
 
-//const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
+/** Fetches the blueprint graph; throws if the response is not OK. */
 export async function fetchGraph(): Promise<BlueprintGraph> {
-  //await sleep(1000);
-
   const response = await fetch(GRAPH_PATH);
 
   if (!response.ok) {
