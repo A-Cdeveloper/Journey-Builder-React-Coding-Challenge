@@ -1,8 +1,24 @@
+import { Header } from "./components/Header.tsx";
+import { FormList } from "./features/graph/components/FormList.tsx";
+import { PrefillPanel } from "./features/prefill/components/PrefillPanel.tsx";
+
 function App() {
   return (
-    <>
-      <h1>Journey Builder React Coding Challenge</h1>
-    </>
+    <div className="min-h-screen bg-slate-100">
+      <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+        <Header />
+
+        <div className="flex flex-col gap-4 md:flex-row md:gap-6">
+          <aside className="w-full shrink-0 md:w-1/3">
+            <FormList />
+          </aside>
+
+          <main className="w-full min-w-0 md:w-2/3">
+            <PrefillPanel />
+          </main>
+        </div>
+      </div>
+    </div>
   );
 }
 
