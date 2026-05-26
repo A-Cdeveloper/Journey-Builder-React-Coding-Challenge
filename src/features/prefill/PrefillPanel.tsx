@@ -1,6 +1,6 @@
 import { useFetchGraph } from "@/features/graph/hooks/useFetchGraph.ts";
-import { PrefillFieldList } from "@/features/prefill/components/PrefillFieldList.tsx";
-import { PrefillFieldModal } from "@/features/prefill/components/PrefillFieldModal.tsx";
+import { PrefillFieldList } from "@/features/prefill/PrefillFieldList.tsx";
+import { PrefillFieldModal } from "@/features/prefill/PrefillFieldModal.tsx";
 import { usePrefillFieldModal } from "@/features/prefill/hooks/usePrefillFieldModal.ts";
 import { formatMapping } from "@/features/prefill/prefillDataSources/formatMapping.ts";
 import type { PrefillMappingsState } from "@/types/prefill.ts";

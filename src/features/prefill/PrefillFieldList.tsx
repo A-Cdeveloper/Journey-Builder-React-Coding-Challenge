@@ -1,6 +1,6 @@
 import type { FormDefinition } from "@/types/graph.ts";
 import type { NodePrefillMappings } from "@/types/prefill.ts";
-import { PrefillField } from "@/features/prefill/components/PrefillField.tsx";
+import { PrefillField } from "@/features/prefill/PrefillField.tsx";
 
 type PrefillFieldListProps = {
   formDefinition: FormDefinition;

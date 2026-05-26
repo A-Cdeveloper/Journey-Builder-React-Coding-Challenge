@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Header } from "@/components/Header.tsx";
-import { FormList } from "@/features/graph/components/FormList.tsx";
-import { PrefillPanel } from "@/features/prefill/components/PrefillPanel.tsx";
+import { FormList } from "@/features/graph/FormList.tsx";
+import { PrefillPanel } from "@/features/prefill/PrefillPanel.tsx";
 import type { PrefillMappingsState } from "@/types/prefill.ts";
 
 function App() {
