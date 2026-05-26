@@ -1,152 +1,123 @@
 # Journey Builder — Frontend
 
-React + TypeScript application for browsing journey blueprint forms and configuring per-field prefill mappings.
+React + TypeScript app for the [Avantos Journey Builder coding challenge](https://fluttering-atmosphere-1b5.notion.site/Journey-Builder-React-Coding-Challenge-190d5fe264fa80cba39ec21afc6d42ec).
 
-Challenge specification: [Journey Builder — React Coding Challenge](https://fluttering-atmosphere-1b5.notion.site/Journey-Builder-React-Coding-Challenge-190d5fe264fa80cba39ec21afc6d42ec).
+For a selected form node, you map each field to a value from **direct prerequisites**, **transitive prerequisites**, or **global namespaces** (Action Properties, Client Organisation Properties). The modal lists every option from `getPrefillSourceGroups()`; UI code does not branch on source type.
 
-## Repository layout
+---
+
+## Run locally
+
+The blueprint graph comes from Avantos’s mock server in a **separate** repo. Run both processes.
+
+### 1\. Mock server (port 3000)
 
 ```
-Journey-Builder/
-├── frontend/                 # this project
-└── frontendchallengeserver/  # local mock API
-```
-
-## Prerequisites
-
-- Node.js 20+
-- npm 10+
-
-## Getting started
-
-Run the mock API and the frontend in **two separate terminals**.
-
-### 1. Mock API
-
-```bash
-cd ../frontendchallengeserver
-npm install   # first time only
+git clone https://github.com/mosaic-avantos/frontendchallengeserver.git
+cd frontendchallengeserver
+npm install
 npm start
 ```
 
-The server listens on **http://localhost:3000**.
+`GET /api/v1/{tenantId}/actions/blueprints/{blueprintId}/graph/` — data from `graph.json`.
 
-Graph endpoint:
+### 2\. This app (port 5173)
+
+From the repo root (where `package.json` lives):
 
 ```
-GET /api/v1/{tenantId}/actions/blueprints/{blueprintId}/graph/
-```
+# first time only:
+git clone https://github.com/A-Cdeveloper/Journey-Builder-React-Coding-Challenge.git
+cd Journey-Builder-React-Coding-Challenge
 
-### 2. Frontend environment
-
-```bash
-cd frontend
-cp .env.example .env.development
-```
-
-Edit `.env.development` and set `VITE_TENANT_ID` and `VITE_BLUEPRINT_ID`. For the bundled mock data, use `tenant_id` and `id` from `../frontendchallengeserver/graph.json`.
-
-Do not commit `.env.development`.
-
-| Variable                | Description                                    |
-| ----------------------- | ---------------------------------------------- |
-| `VITE_API_PROXY_TARGET` | Mock API origin (e.g. `http://localhost:3000`) |
-| `VITE_TENANT_ID`        | Tenant segment in the graph URL                |
-| `VITE_BLUEPRINT_ID`     | Blueprint segment in the graph URL             |
-
-### 3. Frontend dev server
-
-```bash
-npm install   # first time only
+# every time (or after clone):
+git pull
+cp .env.example .env.development   # first time only; skip if file exists
+npm install
 npm run dev
 ```
 
-Open **http://localhost:5173**.
+Open **http://localhost:5173**. Pick a form in the **sidebar**; the prefill panel is on the right.
 
-### Smoke check
+Do not commit `.env.development`.
 
-- Graph JSON loads at  
-  `{VITE_API_PROXY_TARGET}/api/v1/{VITE_TENANT_ID}/actions/blueprints/{VITE_BLUEPRINT_ID}/graph/`
-- The app starts without missing-environment errors.
-- Select a form in the sidebar, open a field in the prefill panel, pick a source in the modal, confirm the mapping label appears, clear it with ×, and close the modal (Escape, backdrop, or close control).
+### Environment variables
 
-## npm scripts
+| Variable                | Purpose                                                             |
+| ----------------------- | ------------------------------------------------------------------- |
+| `VITE_API_PROXY_TARGET` | Mock API origin; Vite proxies `/api` here in dev                    |
+| `VITE_TENANT_ID`        | Tenant segment in the graph URL — use `tenant_id` from `graph.json` |
+| `VITE_BLUEPRINT_ID`     | Blueprint segment — use `id` from `graph.json`                      |
 
-| Command                | Description                  |
-| ---------------------- | ---------------------------- |
-| `npm run dev`          | Vite development server      |
-| `npm run build`        | Typecheck + production build |
-| `npm run preview`      | Preview production build     |
-| `npm run lint`         | ESLint                       |
-| `npm run test`         | Vitest                       |
-| `npm run format`       | Prettier (write)             |
-| `npm run format:check` | Prettier (check)             |
+`src/utils/requireEnv.ts` fails fast if required values are missing. The graph URL is built in `src/config/constants.ts`.
 
-## Tech stack
+---
 
-- React 19, TypeScript, Vite 8
-- Tailwind CSS 4
-- TanStack Query 5
-- Vitest
-- Husky, lint-staged, Commitlint
+## Architecture at a glance
 
-## Configuration notes
+**Graph (read-only)** — Fetched with TanStack Query in `useFetchGraph` (`features/graph/api/fetchGraph.ts`). Shared across the sidebar and prefill panel.
 
-- **Dev proxy:** `vite.config.ts` forwards `/api` to `VITE_API_PROXY_TARGET`.
-- **Graph URL:** assembled in `src/config/constants.ts` from env vars.
-- **Env validation:** `src/utils/requireEnv.ts` fails fast when required variables are missing.
-- **Imports:** `@/` maps to `src/` (Vite + TypeScript).
+**Prefill mappings (client)** — `prefillMappings` state in `App.tsx`: `Record<nodeId, Record<fieldKey, PrefillSelection>>`. Session-only; refresh clears it. State is keyed by **canvas node id**, not form schema id, so two nodes using the same form keep separate mappings.
 
-| File               | Tracked in git |
-| ------------------ | -------------- |
-| `.env.example`     | Yes            |
-| `.env.development` | No             |
+**UI flow** — `FormList` → `PrefillPanel` → `PrefillFieldList` (per-form “Prefill fields for this form” toggle) → `PrefillFieldModal` with `PrefillSourcePicker`. Search in the modal uses `filterSourceGroups.ts` (matches group or option labels).
 
-## Project structure
+**Upstream forms** — `features/graph/lib/adjacency.ts` walks `nodes[].data.prerequisites` for direct and transitive predecessors. `nodes[].data.component_id` links each node to `forms[].id`; fields come from `forms[].field_schema.properties`.
+
+---
+
+## Adding a new data source
+
+### Global namespace (no new files)
+
+Add an entry in `src/config/globalNamespaces.ts`. `globalSource.ts` exposes it in the picker automatically; `formatMapping.ts` already resolves labels from that config.
+
+### New source category
+
+1.  Add `src/features/prefill/prefillDataSources/<name>Source.ts` that exports `get<Name>SourceGroups(...)` returning `PrefillSourceGroup[]` (see `directSource.ts` / `globalSource.ts`).
+2.  Merge its groups in `getPrefillSourceGroups()` in `prefillDataSources/index.ts` (same pattern as direct + transitive today).
+3.  If the stored value is not `form` or `global`, extend `PrefillSelection` in `src/types/prefill.ts` and handle it in `formatMapping.ts`.
+
+Form-backed sources should reuse `buildFormSourceGroups()` and adjacency helpers; globals only need config or a small dedicated module.
+
+---
+
+## Project layout
 
 ```
 src/
-├── App.tsx
-├── main.tsx
-├── config/
-│   ├── constants.ts
-│   └── globalNamespaces.ts   # Action / Client Organisation fields
-├── types/
-│   ├── graph.ts
-│   └── prefill.ts            # UI mapping model (PrefillSelection)
-├── utils/requireEnv.ts
-├── components/               # shared UI (Modal, Loader, ErrorBoundary, …)
-├── providers/                # React Query
-└── features/
-    ├── graph/
-    │   ├── FormList.tsx, FormItem.tsx
-    │   ├── api/              # fetchGraph
-    │   ├── hooks/
-    │   └── lib/adjacency.ts  # direct / transitive prerequisites
-    └── prefill/
-        ├── PrefillPanel.tsx, PrefillField*.tsx, PrefillFieldModal.tsx
-        ├── hooks/            # modal open / pick / close
-        └── prefillDataSources/  # direct, transitive, global → picker groups
+  App.tsx                          # selectedNodeId + prefillMappings
+  config/
+    constants.ts                   # graph API URL
+    globalNamespaces.ts            # global picker groups
+  types/
+    graph.ts
+    prefill.ts                     # PrefillSelection, PrefillMappingsState
+  utils/requireEnv.ts
+  components/                      # Modal, Loader, SearchInput, ToggleSwitch, …
+  providers/                       # React Query
+  features/
+    graph/
+      FormList.tsx, FormItem.tsx
+      api/fetchGraph.ts
+      hooks/useFetchGraph.ts
+      lib/adjacency.ts             # direct / transitive prerequisites
+    prefill/
+      PrefillPanel.tsx
+      PrefillFieldList.tsx, PrefillField.tsx, PrefillFieldModal.tsx
+      hooks/usePrefillFieldModal.ts
+      modal/                       # PrefillSourcePicker, PrefillSourceGroup
+      prefillDataSources/          # index, direct, transitive, global, filter, format
 ```
 
-## Extending prefill data sources
+## npm scripts
 
-The picker reads a flat list of groups from `getPrefillSourceGroups()` in `src/features/prefill/prefillDataSources/index.ts`. UI components do not branch on source type.
+| Command           | Description                  |
+| ----------------- | ---------------------------- |
+| `npm run dev`     | Development server           |
+| `npm run build`   | Typecheck + production build |
+| `npm run preview` | Preview production build     |
+| `npm run lint`    | ESLint                       |
+| `npm run test`    | Vitest                       |
+| `npm run format`  | Prettier                     |
 
-**Add a global namespace** — append an entry to `src/config/globalNamespaces.ts`. `globalSource.ts` picks it up automatically.
-
-**Add a new source kind** (e.g. external API):
-
-1. Create `src/features/prefill/prefillDataSources/<name>Source.ts` exporting `get<Name>SourceGroups(...)` returning `PrefillSourceGroup[]`.
-2. Spread the result in `getPrefillSourceGroups()` inside `index.ts`.
-3. Extend `PrefillSelection` in `src/types/prefill.ts` if the mapping shape is new.
-4. Handle the new variant in `formatMapping.ts` for chip labels.
-
-Form DAG sources use `features/graph/lib/adjacency.ts` plus `buildFormSourceGroups()` in `formSourceGroups.ts`.
-
-**Graph model (API):**
-
-- `nodes[].data.component_id` matches `forms[].id`.
-- Field definitions are in `forms[].field_schema.properties`.
-- Dependencies appear in two equivalent shapes: `edges` (`source` → `target`, parent → child) and `nodes[].data.prerequisites` (parent node ids for that form).
-- **Prefill traversal uses `prerequisites` only** — see `features/graph/lib/adjacency.ts` (`getDirectPredecessorIds`, `getTransitivePredecessorIds`). `edges` are not read by the app today; they matter for canvas-style graph UIs or if you build a parent index at parse time.
+**Stack:** React 19, TypeScript, Vite 8, Tailwind CSS 4, TanStack Query 5.
