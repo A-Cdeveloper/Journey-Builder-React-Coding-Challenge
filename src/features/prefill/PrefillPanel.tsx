@@ -76,8 +76,9 @@ export function PrefillPanel({
             {selectedNode.data.name}
           </span>
         </h2>
-        {formDefinition ? (
+        {formDefinition && selectedNodeId ? (
           <PrefillFieldList
+            selectedNodeId={selectedNodeId}
             formDefinition={formDefinition}
             nodeMappings={nodeMappings}
             formatMapping={formatFieldMapping}

@@ -1,8 +1,11 @@
+import { useState } from "react";
+import { ToggleSwitch } from "@/components/ToggleSwitch.tsx";
+import { PrefillField } from "@/features/prefill/PrefillField.tsx";
 import type { FormDefinition } from "@/types/graph.ts";
 import type { NodePrefillMappings } from "@/types/prefill.ts";
-import { PrefillField } from "@/features/prefill/PrefillField.tsx";
 
 type PrefillFieldListProps = {
+  selectedNodeId: string;
   formDefinition: FormDefinition;
   nodeMappings?: NodePrefillMappings;
   formatMapping: (fieldKey: string) => string | undefined;
@@ -11,30 +14,62 @@ type PrefillFieldListProps = {
 };
 
 export function PrefillFieldList({
+  selectedNodeId,
   formDefinition,
   nodeMappings,
   formatMapping,
   onFieldClick,
   onClearField,
 }: PrefillFieldListProps) {
+  const [disabledByNodeId, setDisabledByNodeId] = useState<
+    Record<string, boolean>
+  >({});
+
+  const disabledPrefill = disabledByNodeId[selectedNodeId] ?? false;
+
+  const setDisabledPrefill = (disabled: boolean) => {
+    setDisabledByNodeId((prev) => ({
+      ...prev,
+      [selectedNodeId]: disabled,
+    }));
+  };
+
   const { properties, required = [] } = formDefinition.field_schema;
   const fields = Object.entries(properties);
 
   return (
-    <div className="mt-4 space-y-2">
-      {fields.map(([fieldKey, property]) => (
-        <PrefillField
-          key={fieldKey}
-          fieldKey={fieldKey}
-          property={property}
-          isRequired={required.includes(fieldKey)}
-          onOpen={() => onFieldClick(fieldKey)}
-          mappingText={
-            nodeMappings?.[fieldKey] ? formatMapping(fieldKey) : undefined
-          }
-          onClear={() => onClearField(fieldKey)}
+    <>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <span className="text-sm font-medium text-slate-800">
+          Prefill fields for this form
+        </span>
+        <ToggleSwitch
+          checked={!disabledPrefill}
+          ariaLabel="Prefill fields for this form"
+          onCheckedChange={(enabled) => setDisabledPrefill(!enabled)}
         />
-      ))}
-    </div>
+      </div>
+
+      <div
+        className={`space-y-2 ${disabledPrefill ? "pointer-events-none opacity-50" : ""}`}
+      >
+        {fields.map(([fieldKey, property]) => (
+          <PrefillField
+            key={fieldKey}
+            fieldKey={fieldKey}
+            property={property}
+            isRequired={required.includes(fieldKey)}
+            onOpen={() => {
+              if (!disabledPrefill) onFieldClick(fieldKey);
+            }}
+            mappingText={
+              nodeMappings?.[fieldKey] ? formatMapping(fieldKey) : undefined
+            }
+            onClear={() => onClearField(fieldKey)}
+            disabledPrefill={disabledPrefill}
+          />
+        ))}
+      </div>
+    </>
   );
 }
