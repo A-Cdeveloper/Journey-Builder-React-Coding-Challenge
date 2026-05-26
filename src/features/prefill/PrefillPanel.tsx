@@ -34,7 +34,7 @@ export function PrefillPanel({
     closeModal,
     pickMapping,
   } = usePrefillFieldModal({
-    selectedNodeId,
+    selectedNode: selectedNode ?? null,
     formDefinition,
     prefillMappings,
     onPrefillMappingsChange,

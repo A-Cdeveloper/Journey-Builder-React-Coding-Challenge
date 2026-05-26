@@ -1,19 +1,19 @@
 import { useState } from "react";
-import type { FormDefinition } from "@/types/graph.ts";
+import type { FormDefinition, GraphNode } from "@/types/graph.ts";
 import type {
   PrefillMappingsState,
   PrefillSelection,
 } from "@/types/prefill.ts";
 
 type UsePrefillFieldModalInput = {
-  selectedNodeId: string | null;
+  selectedNode: GraphNode | null;
   formDefinition: FormDefinition | undefined;
   prefillMappings: PrefillMappingsState;
   onPrefillMappingsChange: (next: PrefillMappingsState) => void;
 };
 
 export function usePrefillFieldModal({
-  selectedNodeId,
+  selectedNode,
   formDefinition,
   prefillMappings,
   onPrefillMappingsChange,
@@ -26,22 +26,22 @@ export function usePrefillFieldModal({
       : undefined;
 
   const isModalOpen =
-    activeFieldProperty !== undefined && selectedNodeId !== null;
+    activeFieldProperty !== undefined && selectedNode !== null;
 
   const modalTitle =
     isModalOpen && activeFieldProperty
-      ? `Select data to prefill ${activeFieldProperty.title ?? activeFieldKey}`
+      ? `Select data to prefill field ${activeFieldProperty.title ?? activeFieldKey} - ${selectedNode.data.name}`
       : "Prefill";
 
   const closeModal = () => setActiveFieldKey(null);
 
   const pickMapping = (selection: PrefillSelection) => {
-    if (!selectedNodeId || !activeFieldKey) return;
+    if (!selectedNode || !activeFieldKey) return;
 
     onPrefillMappingsChange({
       ...prefillMappings,
-      [selectedNodeId]: {
-        ...prefillMappings[selectedNodeId],
+      [selectedNode.id]: {
+        ...prefillMappings[selectedNode.id],
         [activeFieldKey]: selection,
       },
     });
