@@ -2,9 +2,13 @@ import { useState } from "react";
 import { Header } from "@/components/Header.tsx";
 import { FormList } from "@/features/graph/components/FormList.tsx";
 import { PrefillPanel } from "@/features/prefill/components/PrefillPanel.tsx";
+import type { PrefillMappingsState } from "@/types/prefill.ts";
 
 function App() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [prefillMappings, setPrefillMappings] = useState<PrefillMappingsState>(
+    {},
+  );
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -20,7 +24,11 @@ function App() {
           </aside>
 
           <main className="w-full min-w-0 md:w-2/3">
-            <PrefillPanel selectedNodeId={selectedNodeId} />
+            <PrefillPanel
+              selectedNodeId={selectedNodeId}
+              prefillMappings={prefillMappings}
+              onPrefillMappingsChange={setPrefillMappings}
+            />
           </main>
         </div>
       </div>
