@@ -119,12 +119,12 @@ src/
 ├── providers/                # React Query
 └── features/
     ├── graph/
+    │   ├── FormList.tsx, FormItem.tsx
     │   ├── api/              # fetchGraph
-    │   ├── components/       # FormList
     │   ├── hooks/
     │   └── lib/adjacency.ts  # direct / transitive prerequisites
     └── prefill/
-        ├── components/       # panel, field list, modal
+        ├── PrefillPanel.tsx, PrefillField*.tsx, PrefillFieldModal.tsx
         ├── hooks/            # modal open / pick / close
         └── prefillDataSources/  # direct, transitive, global → picker groups
 ```

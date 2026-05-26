@@ -28,17 +28,14 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-lg bg-white shadow-lg"
+        className="w-full max-w-3xl rounded-lg bg-white shadow-lg"
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
         onClick={(event) => event.stopPropagation()}
       >
         <header className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
-          <h2
-            id="modal-title"
-            className="text-base font-semibold text-slate-900"
-          >
+          <h2 id="modal-title" className="text-xl font-semibold text-slate-900">
             {title}
           </h2>
           <button
