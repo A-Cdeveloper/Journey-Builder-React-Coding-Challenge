@@ -68,7 +68,7 @@ Open **http://localhost:5173**.
 - Graph JSON loads at  
   `{VITE_API_PROXY_TARGET}/api/v1/{VITE_TENANT_ID}/actions/blueprints/{VITE_BLUEPRINT_ID}/graph/`
 - The app starts without missing-environment errors.
-- Select a form in the sidebar, open a field in the prefill panel, and confirm the modal opens and closes (Escape, backdrop, or close control).
+- Select a form in the sidebar, open a field in the prefill panel, pick a source in the modal, confirm the mapping label appears, clear it with ×, and close the modal (Escape, backdrop, or close control).
 
 ## npm scripts
 
@@ -108,18 +108,45 @@ Open **http://localhost:5173**.
 src/
 ├── App.tsx
 ├── main.tsx
-├── config/constants.ts
-├── types/graph.ts
+├── config/
+│   ├── constants.ts
+│   └── globalNamespaces.ts   # Action / Client Organisation fields
+├── types/
+│   ├── graph.ts
+│   └── prefill.ts            # UI mapping model (PrefillSelection)
 ├── utils/requireEnv.ts
-├── components/          # shared UI (Modal, Loader, ErrorBoundary, …)
-├── providers/           # React Query
+├── components/               # shared UI (Modal, Loader, ErrorBoundary, …)
+├── providers/                # React Query
 └── features/
-    ├── graph/           # fetch graph, form list
-    └── prefill/         # prefill panel, fields, modal wiring
+    ├── graph/
+    │   ├── api/              # fetchGraph
+    │   ├── components/       # FormList
+    │   ├── hooks/
+    │   └── lib/adjacency.ts  # direct / transitive prerequisites
+    └── prefill/
+        ├── components/       # panel, field list, modal
+        ├── hooks/            # modal open / pick / close
+        └── prefillDataSources/  # direct, transitive, global → picker groups
 ```
+
+## Extending prefill data sources
+
+The picker reads a flat list of groups from `getPrefillSourceGroups()` in `src/features/prefill/prefillDataSources/index.ts`. UI components do not branch on source type.
+
+**Add a global namespace** — append an entry to `src/config/globalNamespaces.ts`. `globalSource.ts` picks it up automatically.
+
+**Add a new source kind** (e.g. external API):
+
+1. Create `src/features/prefill/prefillDataSources/<name>Source.ts` exporting `get<Name>SourceGroups(...)` returning `PrefillSourceGroup[]`.
+2. Spread the result in `getPrefillSourceGroups()` inside `index.ts`.
+3. Extend `PrefillSelection` in `src/types/prefill.ts` if the mapping shape is new.
+4. Handle the new variant in `formatMapping.ts` for chip labels.
+
+Form DAG sources use `features/graph/lib/adjacency.ts` plus `buildFormSourceGroups()` in `formSourceGroups.ts`.
 
 **Graph model (API):**
 
 - `nodes[].data.component_id` matches `forms[].id`.
 - Field definitions are in `forms[].field_schema.properties`.
-- `edges` are directed (`source` → `target`) for dependency relationships between forms.
+- Dependencies appear in two equivalent shapes: `edges` (`source` → `target`, parent → child) and `nodes[].data.prerequisites` (parent node ids for that form).
+- **Prefill traversal uses `prerequisites` only** — see `features/graph/lib/adjacency.ts` (`getDirectPredecessorIds`, `getTransitivePredecessorIds`). `edges` are not read by the app today; they matter for canvas-style graph UIs or if you build a parent index at parse time.
