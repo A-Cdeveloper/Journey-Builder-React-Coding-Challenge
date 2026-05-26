@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv } from "vite";
@@ -26,6 +27,17 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         "/api": apiProxyTarget,
+      },
+    },
+    test: {
+      environment: "jsdom",
+      setupFiles: ["./src/__tests__/setup.ts"],
+      include: ["src/__tests__/**/*.test.{ts,tsx}"],
+      coverage: {
+        provider: "v8",
+        reporter: ["text", "html"],
+        include: ["src/**/*.{ts,tsx}"],
+        exclude: ["src/__tests__/**", "src/main.tsx", "src/vite-env.d.ts"],
       },
     },
   };
