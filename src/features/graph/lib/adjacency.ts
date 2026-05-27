@@ -5,7 +5,8 @@ function findNode(nodes: GraphNode[], nodeId: string): GraphNode | undefined {
 }
 
 /**
- * Direct prerequisite node ids for `nodeId` (one hop via `data.prerequisites`).
+ * Immediate prerequisite node ids for `nodeId` (one hop via `data.prerequisites`).
+ * Returns an empty array when the target node is not in `nodes`.
  */
 export function getDirectPredecessorIds(
   nodes: GraphNode[],
@@ -17,8 +18,8 @@ export function getDirectPredecessorIds(
 }
 
 /**
- * Ancestors at 2+ hops via prerequisites. Excludes direct prerequisites so the
- * picker can list direct and transitive groups separately.
+ * Ancestor node ids at 2+ hops via prerequisites (BFS over prerequisite edges).
+ * Excludes direct prerequisites so the picker can show direct and transitive groups separately.
  */
 export function getTransitivePredecessorIds(
   nodes: GraphNode[],

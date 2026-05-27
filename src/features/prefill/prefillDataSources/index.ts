@@ -21,7 +21,11 @@ type GetPrefillSourceGroupsInput = {
   targetNodeId: string | null;
 };
 
-/** Groups shown under "Available data" — globals, then direct forms, then transitive forms. */
+/**
+ * Source groups for the modal "Available data" list: global namespaces first,
+ * then direct prerequisite forms, then transitive (2+ hop) forms.
+ * Without graph or target node, only global groups are returned.
+ */
 export function getPrefillSourceGroups({
   graph,
   targetNodeId,

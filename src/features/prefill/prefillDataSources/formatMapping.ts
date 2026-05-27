@@ -7,6 +7,10 @@ type FormatMappingInput = {
   graph: BlueprintGraph | undefined;
 };
 
+/**
+ * Builds the label shown next to a prefilled field (e.g. `Form A › Email`).
+ * Returns `undefined` when there is no selection or graph context.
+ */
 export function formatMapping({
   selection,
   graph,

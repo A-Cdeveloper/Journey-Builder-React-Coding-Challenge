@@ -12,6 +12,10 @@ type UsePrefillFieldModalInput = {
   onPrefillMappingsChange: (next: PrefillMappingsState) => void;
 };
 
+/**
+ * Manages the prefill source picker modal for one field on the selected form.
+ * `pickMapping` writes the chosen source into `prefillMappings` and closes the modal.
+ */
 export function usePrefillFieldModal({
   selectedNode,
   formDefinition,

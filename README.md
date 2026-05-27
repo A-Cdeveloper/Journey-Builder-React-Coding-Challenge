@@ -1,8 +1,18 @@
 # Journey Builder — Frontend
 
-React + TypeScript app for the [Avantos Journey Builder coding challenge](https://fluttering-atmosphere-1b5.notion.site/Journey-Builder-React-Coding-Challenge-190d5fe264fa80cba39ec21afc6d42ec).
+React + TypeScript submission for the [Avantos Journey Builder coding challenge](https://fluttering-atmosphere-1b5.notion.site/Journey-Builder-React-Coding-Challenge-190d5fe264fa80cba39ec21afc6d42ec).
 
 For a selected form node, you map each field to a value from **direct prerequisites**, **transitive prerequisites**, or **global namespaces** (Action Properties, Client Organisation Properties). The modal lists every option from `getPrefillSourceGroups()`; UI code does not branch on source type.
+
+---
+
+## Features
+
+- **Form list** — nodes from the blueprint graph, with loading and error states
+- **Prefill panel** — per-field mapping, display label, and clear (×)
+- **Source picker modal** — grouped “Available data”, search, expandable sections
+- **Per-form toggle** — disable prefill for the active form without losing stored mappings
+- **Extensible sources** — new globals via config; new categories via `prefillDataSources/`
 
 ---
 
@@ -23,7 +33,7 @@ npm start
 
 ### 2\. This app (port 5173)
 
-From the repo root (where `package.json` lives):
+From the directory that contains `package.json`:
 
 ```
 # first time only:
@@ -53,31 +63,63 @@ Do not commit `.env.development`.
 
 ---
 
+## Run tests
+
+```
+npm test                # watch mode
+npm run test:run        # single run (CI-friendly)
+npm run test:coverage   # coverage report (text + html)
+```
+
+Coverage is intentionally focused on **pure logic** (`adjacency`, `prefillDataSources`, `fetchGraph`). Presentational components, `App.tsx`, types, config, and providers are excluded from coverage.
+
+---
+
 ## Architecture at a glance
 
 **Graph (read-only)** — Fetched with TanStack Query in `useFetchGraph` (`features/graph/api/fetchGraph.ts`). Shared across the sidebar and prefill panel.
 
-**Prefill mappings (client)** — `prefillMappings` state in `App.tsx`: `Record<nodeId, Record<fieldKey, PrefillSelection>>`. Session-only; refresh clears it. State is keyed by **canvas node id**, not form schema id, so two nodes using the same form keep separate mappings.
+**Prefill mappings (client)** — `prefillMappings` state in `App.tsx`: `Record<nodeId, Record<fieldKey, PrefillSelection>>`. Session-only; refresh clears it. State is keyed by **canvas node id**, not form schema id, so two nodes using the same form keep separate mappings. The `PrefillSelection` union in `src/types/prefill.ts` is the UI model and is intended to map to API `input_mapping` when persistence exists.
 
 **UI flow** — `FormList` → `PrefillPanel` → `PrefillFieldList` (per-form “Prefill fields for this form” toggle) → `PrefillFieldModal` with `PrefillSourcePicker`. Search in the modal uses `filterSourceGroups.ts` (matches group or option labels).
 
-**Upstream forms** — `features/graph/lib/adjacency.ts` walks `nodes[].data.prerequisites` for direct and transitive predecessors. `nodes[].data.component_id` links each node to `forms[].id`; fields come from `forms[].field_schema.properties`.
+**Upstream forms** — `features/graph/lib/adjacency.ts` walks `nodes[].data.prerequisites` for direct (1-hop) and transitive (2+ hop) predecessors. `nodes[].data.component_id` links each node to `forms[].id`; fields come from `forms[].field_schema.properties`.
+
+**Build** — Production build uses Vite 8 / Rolldown `codeSplitting` groups (`react-vendor`, `query-vendor`, `vendor`) so library chunks stay cacheable across deploys when only app code changes. Tree-shaking is handled by the production bundler; no extra app config required.
+
+**React Compiler** — Enabled via `@vitejs/plugin-react` + `babel-plugin-react-compiler`. Some explicit `useMemo` / `useCallback` / `memo` remain on hot paths for predictable behaviour if the feature set grows.
 
 ---
 
 ## Adding a new data source
 
-### Global namespace (no new files)
+The modal does not know about “direct” or “global”. It only shows the list returned by `getPrefillSourceGroups()` in `prefillDataSources/index.ts`.
 
-Add an entry in `src/config/globalNamespaces.ts`. `globalSource.ts` exposes it in the picker automatically; `formatMapping.ts` already resolves labels from that config.
+That list is built from three modules today:
 
-### New source category
+- `globalSource.ts` → reads `config/globalNamespaces.ts`
+- `directSource.ts` → fields from **direct** prerequisite forms
+- `transitiveSource.ts` → fields from forms **further up** the chain (2+ hops)
 
-1.  Add `src/features/prefill/prefillDataSources/<name>Source.ts` that exports `get<Name>SourceGroups(...)` returning `PrefillSourceGroup[]` (see `directSource.ts` / `globalSource.ts`).
-2.  Merge its groups in `getPrefillSourceGroups()` in `prefillDataSources/index.ts` (same pattern as direct + transitive today).
-3.  If the stored value is not `form` or `global`, extend `PrefillSelection` in `src/types/prefill.ts` and handle it in `formatMapping.ts`.
+You do **not** change the UI (`PrefillSourcePicker`, modal, field rows) when adding a source.
 
-Form-backed sources should reuse `buildFormSourceGroups()` and adjacency helpers; globals only need config or a small dedicated module.
+---
+
+### A) New global field (easiest)
+
+Open `src/config/globalNamespaces.ts` and add a field (or copy the shape of `clientOrganisationProperties` for a new group).
+
+Done — the picker and chip label update automatically.
+
+---
+
+### B) New group from the graph (copy an existing file)
+
+1.  Copy `directSource.ts` or `transitiveSource.ts` to a new file.
+2.  Change which `adjacency.ts` helper you use if needed (`getDirectPredecessorIds` vs `getTransitivePredecessorIds`).
+3.  In `prefillDataSources/index.ts`, add one more spread in the `return` array, e.g. `...getAnotherSourceGroups(graph, targetNodeId)`.
+
+Order in the array = order of sections in the modal.
 
 ---
 
@@ -107,17 +149,21 @@ src/
       hooks/usePrefillFieldModal.ts
       modal/                       # PrefillSourcePicker, PrefillSourceGroup
       prefillDataSources/          # index, direct, transitive, global, filter, format
+  __tests__/                       # Vitest — mirrors features/ + shared fixtures
 ```
 
 ## npm scripts
 
-| Command           | Description                  |
-| ----------------- | ---------------------------- |
-| `npm run dev`     | Development server           |
-| `npm run build`   | Typecheck + production build |
-| `npm run preview` | Preview production build     |
-| `npm run lint`    | ESLint                       |
-| `npm run test`    | Vitest                       |
-| `npm run format`  | Prettier                     |
+| Command                 | Description                  |
+| ----------------------- | ---------------------------- |
+| `npm run dev`           | Development server           |
+| `npm run build`         | Typecheck + production build |
+| `npm run preview`       | Preview production build     |
+| `npm run lint`          | ESLint                       |
+| `npm test`              | Vitest (watch)               |
+| `npm run test:run`      | Vitest single run            |
+| `npm run test:coverage` | Vitest with coverage         |
+| `npm run format`        | Prettier write               |
+| `npm run format:check`  | Prettier check               |
 
-**Stack:** React 19, TypeScript, Vite 8, Tailwind CSS 4, TanStack Query 5.
+**Stack:** React 19, TypeScript, Vite 8 (Rolldown), Tailwind CSS 4, TanStack Query 5, React Compiler, Vitest, ESLint, Prettier, Husky + lint-staged + commitlint.
