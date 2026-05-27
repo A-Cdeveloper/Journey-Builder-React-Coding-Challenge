@@ -10,9 +10,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "vite preview",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test": "vitest --mode development",
+    "test:run": "vitest run --mode development",
+    "test:coverage": "vitest run --coverage --mode development",
     "prepare": "husky"
   },
   "lint-staged": {
