@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { SearchInput } from "@/components/SearchInput.tsx";
 import { PrefillSourceGroup } from "@/features/prefill/modal/PrefillSourceGroup.tsx";
 import { filterSourceGroups } from "@/features/prefill/prefillDataSources/filterSourceGroups.ts";
@@ -17,9 +17,13 @@ export function PrefillSourcePicker({
   targetNodeId,
   onPick,
 }: PrefillSourcePickerProps) {
-  const sourceGroups = getPrefillSourceGroups({ graph, targetNodeId });
   const [openGroupId, setOpenGroupId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const sourceGroups = useMemo(
+    () => getPrefillSourceGroups({ graph, targetNodeId }),
+    [graph, targetNodeId],
+  );
 
   const filteredGroups = filterSourceGroups(sourceGroups, searchQuery);
   const isSearching = searchQuery.trim().length > 0;

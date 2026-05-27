@@ -1,22 +1,23 @@
+import { memo } from "react";
 import type { FormFieldProperty } from "@/types/graph.ts";
 
 type PrefillFieldProps = {
   fieldKey: string;
   property: FormFieldProperty;
   isRequired: boolean;
-  onOpen: () => void;
+  onFieldClick: (fieldKey: string) => void;
+  onClearField: (fieldKey: string) => void;
   mappingText?: string;
-  onClear?: () => void;
   disabledPrefill?: boolean;
 };
 
-export function PrefillField({
+export const PrefillField = memo(function PrefillField({
   fieldKey,
   property,
   isRequired,
-  onOpen,
+  onFieldClick,
+  onClearField,
   mappingText,
-  onClear,
   disabledPrefill,
 }: PrefillFieldProps) {
   const label = property.title ?? fieldKey;
@@ -38,7 +39,7 @@ export function PrefillField({
             type="button"
             className="grid size-6 place-items-center text-sm font-semibold text-slate-700 disabled:pointer-disabled disabled:cursor-not-allowed"
             aria-label="Clear prefill"
-            onClick={onClear}
+            onClick={() => onClearField(fieldKey)}
             disabled={disabledPrefill}
           >
             ×
@@ -48,7 +49,9 @@ export function PrefillField({
         <button
           type="button"
           className="shrink-0 cursor-pointer rounded-md px-2 py-1 text-xs font-medium text-green-600 hover:bg-slate-50 disabled:pointer-disabled disabled:cursor-not-allowed disabled:text-slate-400"
-          onClick={onOpen}
+          onClick={() => {
+            if (!disabledPrefill) onFieldClick(fieldKey);
+          }}
           disabled={disabledPrefill}
         >
           Set prefill
@@ -56,4 +59,4 @@ export function PrefillField({
       )}
     </div>
   );
-}
+});

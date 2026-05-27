@@ -59,14 +59,12 @@ export function PrefillFieldList({
             fieldKey={fieldKey}
             property={property}
             isRequired={required.includes(fieldKey)}
-            onOpen={() => {
-              if (!disabledPrefill) onFieldClick(fieldKey);
-            }}
             mappingText={
               nodeMappings?.[fieldKey] ? formatMapping(fieldKey) : undefined
             }
-            onClear={() => onClearField(fieldKey)}
             disabledPrefill={disabledPrefill}
+            onFieldClick={onFieldClick}
+            onClearField={onClearField}
           />
         ))}
       </div>

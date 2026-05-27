@@ -4,6 +4,7 @@ import { PrefillFieldModal } from "@/features/prefill/PrefillFieldModal.tsx";
 import { usePrefillFieldModal } from "@/features/prefill/hooks/usePrefillFieldModal.ts";
 import { formatMapping } from "@/features/prefill/prefillDataSources/formatMapping.ts";
 import type { PrefillMappingsState } from "@/types/prefill.ts";
+import { useCallback } from "react";
 
 type PrefillPanelProps = {
   selectedNodeId: string | null;
@@ -40,26 +41,32 @@ export function PrefillPanel({
     onPrefillMappingsChange,
   });
 
-  const formatFieldMapping = (fieldKey: string) =>
-    formatMapping({
-      selection: nodeMappings?.[fieldKey],
-      graph: data,
-    });
+  const formatFieldMapping = useCallback(
+    (fieldKey: string) =>
+      formatMapping({
+        selection: nodeMappings?.[fieldKey],
+        graph: data,
+      }),
+    [nodeMappings, data],
+  );
 
-  const clearFieldMapping = (fieldKey: string) => {
-    if (!selectedNodeId) return;
-    if (!prefillMappings[selectedNodeId]?.[fieldKey]) return;
+  const clearFieldMapping = useCallback(
+    (fieldKey: string) => {
+      if (!selectedNodeId) return;
+      if (!prefillMappings[selectedNodeId]?.[fieldKey]) return;
 
-    const current = prefillMappings[selectedNodeId] ?? {};
-    const rest = Object.fromEntries(
-      Object.entries(current).filter(([key]) => key !== fieldKey),
-    );
+      const current = prefillMappings[selectedNodeId] ?? {};
+      const rest = Object.fromEntries(
+        Object.entries(current).filter(([key]) => key !== fieldKey),
+      );
 
-    onPrefillMappingsChange({
-      ...prefillMappings,
-      [selectedNodeId]: rest,
-    });
-  };
+      onPrefillMappingsChange({
+        ...prefillMappings,
+        [selectedNodeId]: rest,
+      });
+    },
+    [selectedNodeId, prefillMappings, onPrefillMappingsChange],
+  );
 
   let content = (
     <p className="text-sm text-slate-500">
