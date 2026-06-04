@@ -23,7 +23,7 @@ export function buildFormSourceGroups(
         isRequired ? form.field_schema.required.includes(fieldKey) : true,
       )
       .map(([fieldKey, prop]) => ({
-        id: `${nodeId}:${fieldKey}`,
+        id: `${isRequired ? "required:" : ""}${nodeId}:${fieldKey}`,
         label: (prop.title ?? fieldKey) + (isRequired ? " (required)" : ""),
         selection: {
           kind: "form" as const,
