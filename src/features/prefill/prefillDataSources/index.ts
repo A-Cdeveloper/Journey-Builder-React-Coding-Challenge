@@ -1,8 +1,7 @@
-import { getDirectSourceGroups } from "@/features/prefill/prefillDataSources/directSource.ts";
 import { getGlobalSourceGroups } from "@/features/prefill/prefillDataSources/globalSource.ts";
-import { getTransitiveSourceGroups } from "@/features/prefill/prefillDataSources/transitiveSource.ts";
 import type { BlueprintGraph } from "@/types/graph.ts";
 import type { PrefillSelection } from "@/types/prefill.ts";
+import { getFormDataSourceGroups, PredecessorTypes } from "./dataFormSources";
 
 export type PrefillSourceOption = {
   id: string;
@@ -36,7 +35,12 @@ export function getPrefillSourceGroups({
 
   return [
     ...groups,
-    ...getDirectSourceGroups(graph, targetNodeId),
-    ...getTransitiveSourceGroups(graph, targetNodeId),
+    ...getFormDataSourceGroups(graph, targetNodeId, PredecessorTypes.DIRECT),
+    ...getFormDataSourceGroups(
+      graph,
+      targetNodeId,
+      PredecessorTypes.TRANSITIVE,
+    ),
+    ...getFormDataSourceGroups(graph, targetNodeId, PredecessorTypes.REQUIRED),
   ];
 }
