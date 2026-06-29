@@ -2,6 +2,10 @@ import { ErrorState } from "@/components/ErrorState.tsx";
 import { Loader } from "@/components/Loader.tsx";
 import { useFetchGraph } from "@/features/graph/hooks/useFetchGraph.ts";
 import FormItem from "./FormItem.tsx";
+import {
+  getDirectPredecessorIds,
+  getTransitivePredecessorIds,
+} from "./lib/adjacency.ts";
 
 type FormListProps = {
   selectedNodeId: string | null;
@@ -13,13 +17,24 @@ export function FormList({ selectedNodeId, onSelectNode }: FormListProps) {
 
   const formNodes = data?.nodes ?? [];
 
+  const directParentsIds = getDirectPredecessorIds(formNodes, selectedNodeId);
+  const transitiveParantsIds = getTransitivePredecessorIds(
+    formNodes,
+    selectedNodeId,
+  );
+
+  const directParentStyle = "border-2 border-green-700";
+  const transitiveParentStyle = "border-2 border-blue-700";
+
   let content = (
     <div className="space-y-1">
       {formNodes.map((node) => (
         <FormItem
           key={node.id}
-          node={node}
+          itemId={node.id}
+          itemName={node.data.name}
           isSelected={node.id === selectedNodeId}
+          classes={`${directParentsIds.includes(node.id) ? directParentStyle : ""} ${transitiveParantsIds.includes(node.id) ? transitiveParentStyle : ""}`}
           onSelect={onSelectNode}
         />
       ))}

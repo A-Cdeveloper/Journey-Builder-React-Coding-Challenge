@@ -1,29 +1,32 @@
-import type { GraphNode } from "@/types/graph.ts";
-
 type FormItemProps = {
-  node: GraphNode;
+  itemId: string;
+  itemName: string;
   isSelected: boolean;
+  classes: string;
   onSelect: (nodeId: string) => void;
 };
 
 export default function FormItem({
-  node,
+  itemId,
+  itemName,
   isSelected,
+  classes,
   onSelect,
 }: FormItemProps) {
+  const basicStyle =
+    "w-full cursor-pointer rounded-md p-2 text-left text-sm text-slate-800 hover:bg-slate-100";
+
   return (
     <button
       type="button"
-      onClick={() => onSelect(node.id)}
+      onClick={() => onSelect(itemId)}
       aria-pressed={isSelected}
-      aria-label={`Select form ${node.data.name}`}
-      className={`w-full cursor-pointer rounded-md p-2 text-left text-sm ${
-        isSelected
-          ? "bg-slate-200 font-medium text-slate-900"
-          : "text-slate-800 hover:bg-slate-100"
-      }`}
+      aria-label={`Select form ${itemName}`}
+      className={`${basicStyle} ${classes}
+      ${isSelected ? "bg-slate-200 font-medium text-slate-900" : ""}
+      `}
     >
-      {node.data.name}
+      {itemName}
     </button>
   );
 }
